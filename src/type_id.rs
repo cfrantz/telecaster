@@ -8,7 +8,7 @@ pub trait GetSelfId {
     fn self_id(&self) -> Option<TypeId>;
 }
 
-impl<T> GetTypeId for T {
+impl<T: ?Sized> GetTypeId for T {
     default fn type_id() -> Option<TypeId> {
         None
     }
@@ -20,12 +20,13 @@ impl<T: GetTypeId> GetSelfId for T {
     }
 }
 
+#[macro_export]
 macro_rules! impl_type_id {
     ($($ty:ty),* $(,)?) => {
         $(
-            impl GetTypeId for $ty {
-                fn type_id() -> Option<TypeId> {
-                    Some(TypeId::of::<$ty>())
+            impl $crate::GetTypeId for $ty {
+                fn type_id() -> Option<std::any::TypeId> {
+                    Some(std::any::TypeId::of::<$ty>())
                 }
             }
         )*
@@ -38,8 +39,8 @@ impl_type_id!(str, &str, String);
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
     use super::*;
+    use anyhow::Result;
 
     #[test]
     fn test_primitive_types() -> Result<()> {
